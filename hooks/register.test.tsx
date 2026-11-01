@@ -360,3 +360,19 @@ test('one session, two notes at once, the first one\'s write answered late: the 
   expect(last).toContain('u-1\t')
   expect(last).toContain('u-2\t')
 })
+
+// Out of order: the submit note's time is taken before the prompt goes on, but it can be written
+// after the row's own note. A row found by its text shows the earliest time either way.
+test('out of order: a submit note written after the row\'s own note still gives the earlier time', () => {
+  const key = keyOf('user', 'fix the build')
+  const late = { u1: { at: '2026-10-31T22:00:03.000Z', key }, 'prompt:2026-10-31T22:00:00.000Z': { at: '2026-10-31T22:00:00.000Z', key } }
+  expect(stampFor(late, 'other-id', key)).toBe('2026-10-31T22:00:00.000Z')
+  expect(stampFor(late, 'u1', key)).toBe('2026-10-31T22:00:03.000Z')
+})
+
+test('comparison: the same two notes written in time order give the same answers', () => {
+  const key = keyOf('user', 'fix the build')
+  const inOrder = { 'prompt:2026-10-31T22:00:00.000Z': { at: '2026-10-31T22:00:00.000Z', key }, u1: { at: '2026-10-31T22:00:03.000Z', key } }
+  expect(stampFor(inOrder, 'other-id', key)).toBe('2026-10-31T22:00:00.000Z')
+  expect(stampFor(inOrder, 'u1', key)).toBe('2026-10-31T22:00:03.000Z')
+})

@@ -4,6 +4,10 @@ The form is Keep a Changelog; versions follow SemVer.
 
 ## [Unreleased]
 
+### Tests
+- A prompt's submit note written after the row's own note: a row found by its text still
+  shows the earlier time. No change to the code.
+
 ## 0.3.5 - 2026-10-30
 
 ### Fixed
