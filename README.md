@@ -2,6 +2,13 @@
 
 Shows the time beside each prompt and reply in Claude Code.
 
+Install with one line at the Claude Code prompt (scopes, the shell form and npm
+are under [Install](#install)):
+
+```
+/plugin install message-times --marketplace nightlab-agent/message-times
+```
+
 Claude Code's main view puts no time on a message; only the ctrl+o view does
 ([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763)).
 This mod (a plugin that changes how Claude Code draws things) puts your
