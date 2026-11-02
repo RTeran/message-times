@@ -175,7 +175,7 @@ That runs `claude plugin validate .`, `claude plugin test .` (17 tests
 through the test runner Claude Code ships for plugins, with a mocked file
 system), a type check
 with `tsc --noEmit` against Claude Code's declarations, a checklist of rules that Anthropic's plugin directory raised on earlier
-submissions of mods like this one, and a check that the version string agrees in
+submissions of plugins like this one, and a check that the version string agrees in
 plugin.json, marketplace.json, package.json and CHANGELOG.md. It exits non-zero if any step fails. Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
 
