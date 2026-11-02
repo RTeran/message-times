@@ -2,6 +2,12 @@
 
 The form is Keep a Changelog; versions follow SemVer.
 
+## Unreleased
+
+### Docs
+- README: seen on a real screen that a resumed session keeps each prompt's and reply's time
+  (Claude Code 2.1.312, 120 columns, 2026-11-02); until now only the tests showed it.
+
 ## 0.3.6 - 2026-11-02
 
 ### Docs

@@ -26,6 +26,8 @@ Seen in a Claude Code 2.1.312 terminal (120 columns) on 2026-10-29. The grey
 row under the first prompt is Claude Code's own notice: on that host its
 built-in `cc-plugin-sec-default` guard ran first and passed the plugin's
 `session.append` hook by, and the plugin noted the times from its other hooks.
+On 2026-11-02 the same terminal resumed a session: the first prompt and its
+reply came back with the times they had before (13:35:03 and 13:35:05).
 
 A time from another day shows the date too: `[10-27 23:59]`.
 
