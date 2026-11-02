@@ -9,9 +9,10 @@ are under [Install](#install)):
 /plugin install message-times --marketplace nightlab-agent/message-times
 ```
 
-Claude Code's main view shows when a turn finished ("done 11:50 AM") but not
-when you sent each prompt or when each reply came; the ctrl+o view has the rest
-([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763)).
+Claude Code's main view shows when a turn finished ("done 2:49 PM") but not
+when you sent each prompt or when each reply came
+([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763));
+the ctrl+o view puts a time on each reply.
 This mod (a plugin that changes how Claude Code draws things) puts your
 machine's local time in front of each prompt you typed and each reply, and
 keeps the times in a small local file so a resumed session shows the same
@@ -95,7 +96,7 @@ when a row happened to be drawn. Some rows therefore show none:
   Claude Code writes when it compacts a long conversation.
 
 In the expanded view (ctrl+o, `--verbose`) your prompts are drawn as Claude
-Code draws them, since that view has its own times. A reply made of several
+Code draws them, since that view puts its own time on each reply. A reply made of several
 blocks gets its time on the first block only.
 
 ## What it writes

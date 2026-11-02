@@ -2,7 +2,12 @@
 
 The form is Keep a Changelog; versions follow SemVer.
 
-## [Unreleased]
+## 0.3.6 - 2026-11-02
+
+### Docs
+- README: Claude Code's main view does show when a turn finished; the README now says what it
+  leaves out (when you sent each prompt and when each reply came) instead of "no time", and that
+  the ctrl+o view times each reply (code.claude.com, interactive mode).
 
 ### Tests
 - A prompt's submit note written after the row's own note: a row found by its text still
