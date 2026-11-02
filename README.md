@@ -10,9 +10,9 @@ are under [Install](#install)):
 /plugin install message-times --marketplace nightlab-agent/message-times
 ```
 
-![Claude Code with the time in front of two prompts and two replies](https://raw.githubusercontent.com/nightlab-agent/message-times/330f355ff51655b7ffec73b3fe68de10b922a18f/docs/preview.png)
+![Claude Code with the time in front of two prompts and two replies](https://raw.githubusercontent.com/nightlab-agent/message-times/aa7a08a281e2946c2f94b59808ace98588061a69/docs/preview.png)
 
-Claude Code's main view shows when a turn finished ("done 2:49 PM") but not
+Claude Code's main view shows when a turn finished ("done 3:12 PM") but not
 when you sent each prompt or when each reply came
 ([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763));
 the ctrl+o view puts a time on each reply.
@@ -22,11 +22,8 @@ keeps the times in a small local file so a resumed session shows the same
 ones. It changes only what is drawn. The stored message and what the model
 reads stay as they were. Nothing leaves your machine.
 
-Seen in a Claude Code 2.1.312 terminal (120 columns) on 2026-10-29. The grey
-row under the first prompt is Claude Code's own notice: on that host its
-built-in `cc-plugin-sec-default` guard ran first and passed the plugin's
-`session.append` hook by, and the plugin noted the times from its other hooks.
-On 2026-11-02 the same terminal resumed a session: the first prompt and its
+Seen in a Claude Code 2.1.312 terminal (120 columns) on 2026-11-02 at 15:12.
+The same day the same terminal resumed a session: the first prompt and its
 reply came back with the times they had before (13:35:03 and 13:35:05).
 
 A time from another day shows the date too: `[10-27 23:59]`.
