@@ -1,6 +1,7 @@
 # message-times
 
-Shows the time beside each prompt and reply in Claude Code.
+Claude Code's main view does not show when you sent each prompt or when each
+reply came. This plugin puts the time in front of each prompt and reply.
 
 Install with one line at the Claude Code prompt (scopes, the shell form and npm
 are under [Install](#install)):
