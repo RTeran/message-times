@@ -13,7 +13,7 @@ Claude Code's main view shows when a turn finished ("done 2:49 PM") but not
 when you sent each prompt or when each reply came
 ([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763));
 the ctrl+o view puts a time on each reply.
-This mod (a plugin that changes how Claude Code draws things) puts your
+This plugin (it changes how Claude Code draws things) puts your
 machine's local time in front of each prompt you typed and each reply, and
 keeps the times in a small local file so a resumed session shows the same
 ones. It changes only what is drawn. The stored message and what the model
@@ -23,8 +23,8 @@ reads stay as they were. Nothing leaves your machine.
 
 Seen in a Claude Code 2.1.312 terminal (120 columns) on 2026-10-29. The grey
 row under the first prompt is Claude Code's own notice: on that host its
-built-in `cc-plugin-sec-default` guard ran first and passed the mod's
-`session.append` hook by, and the mod noted the times from its other hooks.
+built-in `cc-plugin-sec-default` guard ran first and passed the plugin's
+`session.append` hook by, and the plugin noted the times from its other hooks.
 
 A time from another day shows the date too: `[10-27 23:59]`.
 
@@ -64,8 +64,8 @@ version and whether you run it in a terminal, the desktop app or an editor.
 ## How a row gets its time
 
 When the session keeps a prompt you typed or a reply (a row, from here on),
-the mod notes the row's id, the time and the first 160 characters of its text. When the transcript
-draws a message, the mod shows the note with the same id, or else the one
+the plugin notes the row's id, the time and the first 160 characters of its text. When the transcript
+draws a message, the plugin shows the note with the same id, or else the one
 note with the same text when exactly one has it.
 
 Prompts are also noted when you submit them, and replies when the model's
@@ -83,10 +83,10 @@ same text, two submit notes, or two notes further apart, are two rows.
 
 Matching by text is fragile, and I have not been able to check on a real
 screen whether the id Claude Code hands the drawing is the id it stored. So
-the text match stays as the fallback, and the mod never guesses a time from
+the text match stays as the fallback, and the plugin never guesses a time from
 when a row happened to be drawn. Some rows therefore show none:
 
-- rows from before the mod was installed;
+- rows from before the plugin was installed;
 - a prompt you typed with the same text as another (`yes`, twice), when its
   id matches no note: which of the two it is cannot be known;
 - a prompt the session kept more than 10 seconds after you sent it (one
@@ -123,9 +123,9 @@ The third column is conversation text. The `.gitignore` keeps it out of your
 commits; the files still sit on disk in plain text, so anyone with your
 project folder can read them. To forget the times, end the session and delete
 the folder: a running session keeps the notes in memory and writes its file
-again on the next prompt. Nothing reads the files but this mod, at the start of a session and at its first note, and you.
+again on the next prompt. Nothing reads the files but this plugin, at the start of a session and at its first note, and you.
 
-The folder is the mod's one option, `dir` (set it in `/config`). A relative
+The folder is the plugin's one option, `dir` (set it in `/config`). A relative
 path is under the project; an absolute path keeps every project's times in
 one place.
 The `.gitignore` is written only in a folder named `.message-times` (the
@@ -136,7 +136,7 @@ files hold the start of what you typed.
 
 ## What each hook does
 
-The mod makes no network request and sends nothing anywhere. It only reads
+The plugin makes no network request and sends nothing anywhere. It only reads
 the events Claude Code hands it. Everything stays on your machine.
 
 | Hook | What it does | What it changes |
@@ -155,7 +155,7 @@ It does not use the `timeFormat` or `timeZone` settings: times are the
 machine's local 24-hour clock. It does not change what is stored or sent.
 
 If a file cannot be read or written, the times show for this run only and
-a resume has none. A failure inside the mod draws the row as Claude Code drew
+a resume has none. A failure inside the plugin draws the row as Claude Code drew
 it and never changes a kept row.
 
 ## Tests
