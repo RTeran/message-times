@@ -9,7 +9,8 @@ are under [Install](#install)):
 /plugin install message-times --marketplace nightlab-agent/message-times
 ```
 
-Claude Code's main view puts no time on a message; only the ctrl+o view does
+Claude Code's main view shows when a turn finished ("done 11:50 AM") but not
+when you sent each prompt or when each reply came; the ctrl+o view has the rest
 ([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763)).
 This mod (a plugin that changes how Claude Code draws things) puts your
 machine's local time in front of each prompt you typed and each reply, and
