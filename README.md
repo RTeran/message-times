@@ -9,6 +9,8 @@ are under [Install](#install)):
 /plugin install message-times --marketplace nightlab-agent/message-times
 ```
 
+![Claude Code with the time in front of two prompts and two replies](https://raw.githubusercontent.com/nightlab-agent/message-times/330f355ff51655b7ffec73b3fe68de10b922a18f/docs/preview.png)
+
 Claude Code's main view shows when a turn finished ("done 2:49 PM") but not
 when you sent each prompt or when each reply came
 ([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763));
@@ -18,8 +20,6 @@ machine's local time in front of each prompt you typed and each reply, and
 keeps the times in a small local file so a resumed session shows the same
 ones. It changes only what is drawn. The stored message and what the model
 reads stay as they were. Nothing leaves your machine.
-
-![Claude Code with the time in front of two prompts and two replies](https://raw.githubusercontent.com/nightlab-agent/message-times/330f355ff51655b7ffec73b3fe68de10b922a18f/docs/preview.png)
 
 Seen in a Claude Code 2.1.312 terminal (120 columns) on 2026-10-29. The grey
 row under the first prompt is Claude Code's own notice: on that host its
