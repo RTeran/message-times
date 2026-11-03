@@ -87,7 +87,7 @@ test('comparison: a stamps.tsv left by an earlier version is read at start and n
 })
 
 test('at start only the FILES most recently written notes files are read', async ($, on) => {
-  // session 0's file is the oldest of FILES + 1
+  // the first session's file is the oldest of FILES + 1
   const files = new Map<string, string>(
     Array.from({ length: FILES + 1 }, (_, i) => [`/work/.message-times/stamps-s${i}.tsv`, `u-${i}\t2026-10-29T10:00:00.000Z\tuser:row ${i}\n`] as [string, string]),
   )
