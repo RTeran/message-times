@@ -5,8 +5,13 @@ The form is Keep a Changelog; versions follow SemVer.
 ## Unreleased
 
 ### Docs
-- README: seen on a real screen that a resumed session keeps each prompt's and reply's time
-  (Claude Code 2.1.312, 120 columns, 2026-11-02); until now only the tests showed it.
+- README: the opening now says first what Claude Code's main view leaves out (when you sent
+  each prompt and when each reply came), then the install line and the picture.
+- README: the picture was recorded again on 2026-11-02, in a window with no host notice
+  between the prompt and the reply.
+- README: seen on a real screen that a resumed session kept its first prompt's and reply's
+  times (Claude Code 2.1.312, 120 columns, 2026-11-02); until now only the tests showed it.
+- package.json description says plugin.
 
 ## 0.3.6 - 2026-11-02
 

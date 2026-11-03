@@ -12,8 +12,7 @@ are under [Install](#install)):
 
 ![Claude Code with the time in front of two prompts and two replies](https://raw.githubusercontent.com/nightlab-agent/message-times/aa7a08a281e2946c2f94b59808ace98588061a69/docs/preview.png)
 
-Claude Code's main view shows when a turn finished ("done 3:12 PM") but not
-when you sent each prompt or when each reply came
+Claude Code's main view does show when a turn finished ("done 3:12 PM")
 ([anthropics/claude-code#44763](https://github.com/anthropics/claude-code/issues/44763));
 the ctrl+o view puts a time on each reply.
 This plugin (it changes how Claude Code draws things) puts your
@@ -23,8 +22,9 @@ ones. It changes only what is drawn. The stored message and what the model
 reads stay as they were. Nothing leaves your machine.
 
 Seen in a Claude Code 2.1.312 terminal (120 columns) on 2026-11-02 at 15:12.
-The same day the same terminal resumed a session: the first prompt and its
-reply came back with the times they had before (13:35:03 and 13:35:05).
+The same day, in a Claude Code 2.1.312 terminal (120 columns), a resumed session
+showed its first prompt and reply with the times they had before (13:35:03 and
+13:35:05).
 
 A time from another day shows the date too: `[10-27 23:59]`.
 
