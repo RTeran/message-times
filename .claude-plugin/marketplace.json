@@ -8,7 +8,7 @@
       "name": "message-times",
       "source": "./",
       "description": "The time on each prompt and each reply in the main transcript view, kept across a resume.",
-      "version": "0.3.6",
+      "version": "0.3.7",
       "category": "productivity"
     }
   ],

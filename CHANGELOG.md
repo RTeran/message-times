@@ -2,7 +2,7 @@
 
 The form is Keep a Changelog; versions follow SemVer.
 
-## Unreleased
+## 0.3.7 - 2026-11-03
 
 ### Docs
 - README: the opening now says first what Claude Code's main view leaves out (when you sent

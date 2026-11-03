@@ -1,6 +1,6 @@
 {
   "name": "message-times",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Puts the time on each prompt and each reply in Claude Code's main transcript view, and keeps the times across a resume.",
   "homepage": "https://github.com/nightlab-agent/message-times#readme",
   "repository": "https://github.com/nightlab-agent/message-times",
