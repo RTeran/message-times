@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { Stamp, Stamps } from '../types'
+import type { OwnIds, Stamp, Stamps } from '../types'
 
 // message-times: the time on each prompt and each reply in the main conversation
 // view (anthropics/claude-code#44763). The ctrl+o detail view has times of
@@ -38,6 +38,8 @@ export const SAME_ROW_MS = 10_000
 // Change the tag when Stamp's fields change: it declines what an earlier version stored.
 const stamps = atom({ plugin: 'message-times', key: 'stamps' } as const, {} as Stamps, { shape: 'stamps-1' })
 
+const ownNotes = atom({ plugin: 'message-times', key: 'own' } as const, [] as OwnIds, { shape: 'own-1' })
+
 /** What a row's text is matched by: its kind and its first 160 characters, spaces folded. */
 export const keyOf = (kind: 'user' | 'assistant', text: string) => `${kind}:${text.replace(/\s+/g, ' ').trim().slice(0, 160)}`
 
@@ -51,6 +53,52 @@ export const timeOf = (iso: string, now: Date) => {
   return sameDay
     ? `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`
     : `${pad(t.getMonth() + 1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`
+}
+
+const dayOf = (t: Date) => `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`
+
+/** `09:15:32`, whatever the day. Local to the machine. */
+export const clockOf = (iso: string) => {
+  const t = new Date(iso)
+  return Number.isNaN(t.getTime()) ? '' : `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`
+}
+
+/** What a day separator names: weekday, day and month in `locale` (the runtime's when empty), the year
+ * too when it is not this year's; `YYYY-MM-DD` where the runtime cannot format dates. */
+export const dayLabelOf = (iso: string, now: Date, locale?: string) => {
+  const t = new Date(iso)
+  try {
+    const year = t.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' as const }
+    return new Intl.DateTimeFormat(locale || undefined, { weekday: 'long', day: 'numeric', month: 'long', ...year }).format(t)
+  } catch {
+    return dayOf(t)
+  }
+}
+
+/** Whether the conversation reaches past today. Only then are days separated, so a conversation held
+ * within one day looks as it did, and the rows show the clock alone: the separator above says the day. */
+export const spansDays = (all: Stamps, ownIds: OwnIds, now: Date) => {
+  const today = dayOf(now)
+  return ownIds.some(id => {
+    const s = all[id]
+    return s !== undefined && !Number.isNaN(new Date(s.at).getTime()) && dayOf(new Date(s.at)) !== today
+  })
+}
+
+/** Whether the row noted at `at` opens its day in this conversation: no note of the conversation is
+ * earlier that day, but the row's own other notes (its text, within SAME_ROW_MS). Other sessions' notes
+ * do not count: they are not drawn in this conversation. */
+export const opensDay = (all: Stamps, ownIds: OwnIds, at: string, key: string) => {
+  const t = new Date(at).getTime()
+  if (Number.isNaN(t)) return false
+  const day = dayOf(new Date(t))
+  return !ownIds.some(id => {
+    const s = all[id]
+    if (s === undefined) return false
+    const n = new Date(s.at).getTime()
+    if (Number.isNaN(n) || n >= t || dayOf(new Date(n)) !== day) return false
+    return !(s.key === key && t - n <= SAME_ROW_MS)
+  })
 }
 
 /** The newest KEEP notes, oldest first. */
@@ -185,7 +233,68 @@ async function write($: EngineInterface, options: Options, notes: Stamps, done: 
     await update($, stamps, xs => trim(byTime({ ...disk, ...xs })))
   }
   done.mine = trim(byTime({ ...disk, ...done.mine, ...notes }))
+  await update($, ownNotes, () => Object.keys(done.mine))
   await $.fs.write(`${folder}/${name}`, fileText(done.mine))
+}
+
+/** What a drawn row shows: its clock, and the day it opens when it is the first of a day in a
+ * conversation that reaches past today. Null when the row has no note or the notes cannot be read. */
+async function stampOf($: EngineInterface, options: Options, kind: 'user' | 'assistant', id: string, text: string) {
+  try {
+    const all = await read($, stamps)
+    const key = keyOf(kind, text)
+    const at = stampFor(all, id, key)
+    if (!at) return null
+    const ids = await read($, ownNotes)
+    const now = new Date()
+    if (!spansDays(all, ids, now)) return { at, clock: timeOf(at, now), day: null }
+    return { at, clock: clockOf(at), day: opensDay(all, ids, at, key) ? dayLabelOf(at, now, String(options.locale || '')) : null }
+  } catch {
+    return null
+  }
+}
+
+/** The earliest time among the rows on screen: the row at the top of the viewport, as rows are drawn in
+ * the order they were kept. */
+export const topOf = (visible: ReadonlyMap<string, string>) => {
+  let top: string | null = null
+  for (const at of visible.values()) if (top === null || at < top) top = at
+  return top
+}
+
+/** The day the band above the prompt names: that of the top row on screen, in a conversation that
+ * reaches past today. Null otherwise, or when no noted row is on screen. */
+async function bandOf($: EngineInterface, options: Options, visible: ReadonlyMap<string, string>) {
+  try {
+    const top = topOf(visible)
+    if (top === null) return null
+    const now = new Date()
+    if (!spansDays(await read($, stamps), await read($, ownNotes), now)) return null
+    return dayLabelOf(top, now, String(options.locale || ''))
+  } catch {
+    return null
+  }
+}
+
+/** Which noted rows are on screen, by row, with their time, and the top one's day. Kept in the module,
+ * not in $.state: a render hook may not write state. */
+type Viewing = { visible: Map<string, string>; topDay: string | null }
+
+/** A row reports where it is on screen as it is drawn; the band hears of it only by a redraw, asked for
+ * when the top row's day changes, so the redraw it causes finds the same day and asks for no other. */
+function seen($: EngineInterface, view: Viewing, id: string, onScreen: { first: number } | null | undefined, at: string | undefined) {
+  if (onScreen === undefined) return
+  if (onScreen !== null && at !== undefined) view.visible.set(id, at)
+  else view.visible.delete(id)
+  const top = topOf(view.visible)
+  const day = top === null ? null : new Date(top).toDateString()
+  if (day === view.topDay) return
+  view.topDay = day
+  try {
+    $.ui.invalidate('ui.render')
+  } catch {
+    // the band keeps the day it drew until its next redraw
+  }
 }
 
 export const register: Register = (on, options) => {
@@ -194,6 +303,8 @@ export const register: Register = (on, options) => {
   // project itself, `.`), so no .gitignore is written there.
   const own = dirOf(options).replace(/[\\/]+$/, '').split(/[\\/]/).at(-1) === '.message-times'
   const done: Done = { own, ignoredIn: null, last: Promise.resolve(), file: null, mine: {} }
+
+  const view: Viewing = { visible: new Map(), topDay: null }
   on('session.start', async ($, e, next) => {
     try {
       const folder = await folderOf($, options, e.cwd)
@@ -214,7 +325,16 @@ export const register: Register = (on, options) => {
     } catch {
       // no folder yet, or none readable: the notes start empty
     }
-    return next(e)
+    const r = await next(e)
+    // the session's id is the engine's only once it has the session; a resumed one keeps its file
+    try {
+      const folder = await folderOf($, options, e.cwd)
+      const mine = parseFile(await $.fs.read(`${folder}/${fileOf(await $.session.id())}`))
+      await update($, ownNotes, () => Object.keys(mine))
+    } catch {
+      // a new session has no file yet; its first note fills the list
+    }
+    return r
   })
 
   // A /clear ends the conversation but not the process, and no session.start follows (the new session's
@@ -226,6 +346,7 @@ export const register: Register = (on, options) => {
       try {
         await done.last.catch(() => {})
         await update($, stamps, () => ({}))
+        await update($, ownNotes, () => [])
         done.file = null
         done.mine = {}
       } catch {
@@ -288,26 +409,56 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) => {
     // expanded (ctrl+o) the engine draws its own times; other senders' rows are left alone
     if (e.props.isExpanded || e.props.origin.kind !== 'composer') return next(e)
-    let t = ''
-    try {
-      const at = stampFor(await read($, stamps), e.requestId, keyOf('user', e.props.text))
-      t = at ? timeOf(at, new Date()) : ''
-    } catch {
-      // drawn as the engine draws it
-    }
-    return t ? next({ ...e, props: { ...e.props, text: `[${t}] ${e.props.text}` } }) : next(e)
+    const s = await stampOf($, options, 'user', e.requestId, e.props.text)
+    seen($, view, e.requestId, e.props.onScreen, s?.at)
+    if (!s) return next(e)
+    const row = await next({ ...e, props: { ...e.props, text: `[${s.clock}] ${e.props.text}` } })
+    if (!s.day) return row
+    const { Box, Text } = $.ui.resolve(e)
+    return (
+      <Box flexDirection="column">
+        <Box justifyContent="center">
+          <Text dimColor>{`── ${s.day} ──`}</Text>
+        </Box>
+        {row}
+      </Box>
+    )
   })
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
     // the time goes on the block that opens a reply; a summary block is left alone
     if (e.props.isSummary || !e.props.isFirstOfReply) return next(e)
-    let t = ''
-    try {
-      const at = stampFor(await read($, stamps), e.requestId, keyOf('assistant', e.props.text))
-      t = at ? timeOf(at, new Date()) : ''
-    } catch {
-      // drawn as the engine draws it
-    }
-    return t ? next({ ...e, props: { ...e.props, text: `[${t}] ${e.props.text}` } }) : next(e)
+    const s = await stampOf($, options, 'assistant', e.requestId, e.props.text)
+    seen($, view, e.requestId, e.props.onScreen, s?.at)
+    if (!s) return next(e)
+    const row = await next({ ...e, props: { ...e.props, text: `[${s.clock}] ${e.props.text}` } })
+    if (!s.day) return row
+    const { Box, Text } = $.ui.resolve(e)
+    return (
+      <Box flexDirection="column">
+        <Box justifyContent="center">
+          <Text dimColor>{`── ${s.day} ──`}</Text>
+        </Box>
+        {row}
+      </Box>
+    )
+  })
+
+  // Only the fullscreen terminal scrolls the conversation itself and reports which rows are on screen;
+  // on the main screen the terminal emulator scrolls, unseen, so the band would name a wrong day.
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    if (e.viewport?.isFullscreen !== true || e.props.hasSurvey) return next(e)
+    const day = await bandOf($, options, view.visible)
+    if (!day) return next(e)
+    const rest = await next(e)
+    const { Box, Text } = $.ui.resolve(e)
+    return (
+      <Box flexDirection="column">
+        {rest}
+        <Box justifyContent="center">
+          <Text dimColor>{`── ${day} ──`}</Text>
+        </Box>
+      </Box>
+    )
   })
 }

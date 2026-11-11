@@ -1,13 +1,18 @@
 # message-times
 
 Claude Code's main view does not show when you sent each prompt or when each
-reply came. This plugin puts the time in front of each prompt and reply.
+reply came. This plugin puts the time in front of each prompt and reply, and,
+in a conversation that runs over several days, separates the days the way chat
+apps do.
 
-Install with one line at the Claude Code prompt (scopes, the shell form and npm
+This is a fork of [nightlab-agent/message-times](https://github.com/nightlab-agent/message-times)
+that adds [day separators](#days) and a day band above the prompt in fullscreen.
+
+Install with one line at the Claude Code prompt (scopes and the shell form
 are under [Install](#install)):
 
 ```
-/plugin install message-times --marketplace nightlab-agent/message-times
+/plugin install message-times --marketplace RTeran/message-times
 ```
 
 ![Claude Code with the time in front of two prompts and two replies](https://raw.githubusercontent.com/nightlab-agent/message-times/aa7a08a281e2946c2f94b59808ace98588061a69/docs/preview.png)
@@ -26,26 +31,51 @@ The same day, in a Claude Code 2.1.312 terminal (120 columns), a resumed session
 showed its first prompt and reply with the times they had before (13:35:03 and
 13:35:05).
 
-A time from another day shows the date too: `[10-27 23:59]`.
+## Days
+
+While the whole conversation happened today, rows look as above. Once it
+reaches past today (a session left open overnight, or one resumed on a later
+day), the first row of each day gets a line above it naming the day, and the
+rows show the clock alone:
+
+```
+               ── Tuesday 10 November ──
+[23:58:10] check worker status
+⏺ [23:58:30] Both workers are active.
+               ── Wednesday 11 November ──
+[09:12:04] deploy the fix
+```
+
+The year shows only when it is not this year's. Only this conversation's rows
+count: notes other sessions in the project left in the folder never open a
+day. A row with no time cannot open a day either, so when the first row of a
+day has none, the separator goes above the next row of that day that has one.
+In a terminal the rows already drawn stay as they were: a session that crosses
+midnight shows the separator from the next row on, and a resume draws them all.
+
+In fullscreen, a band above the prompt also names the day of the top row on
+screen, and follows the scroll, so the day stays in view between separators.
+Only the fullscreen terminal scrolls the transcript itself and says which rows
+are on screen; on the main screen your terminal emulator scrolls, unseen by
+Claude Code, so there the band is not drawn at all.
+
+The day is written in the language of the `locale` option (`es-ES`, `en-GB`…),
+or in the runtime's default when it is empty.
 
 ## Install
 
 One line at the Claude Code prompt:
 
 ```
-/plugin install message-times --marketplace nightlab-agent/message-times
+/plugin install message-times --marketplace RTeran/message-times
 ```
 
 The same from a shell:
 
 ```
-claude plugin install message-times --marketplace nightlab-agent/message-times
+claude plugin install message-times --marketplace RTeran/message-times
 ```
 
-The same files are on npm as
-[`@nightlab-agent/message-times`](https://www.npmjs.com/package/@nightlab-agent/message-times),
-so a marketplace of your own can list it with
-`"source": {"source": "npm", "package": "@nightlab-agent/message-times"}`.
 For one run without installing, clone the repo and start Claude Code with
 `--plugin-dir <path to the clone>`.
 
@@ -125,7 +155,8 @@ project folder can read them. To forget the times, end the session and delete
 the folder: a running session keeps the notes in memory and writes its file
 again on the next prompt. Nothing reads the files but this plugin, at the start of a session and at its first note, and you.
 
-The folder is the plugin's one option, `dir` (set it in `/config`). A relative
+The folder is the `dir` option (set it in `/config`; the other option is
+`locale`, see [Days](#days)). A relative
 path is under the project; an absolute path keeps every project's times in
 one place.
 The `.gitignore` is written only in a folder named `.message-times` (the
@@ -141,12 +172,13 @@ the events Claude Code hands it. Everything stays on your machine.
 
 | Hook | What it does | What it changes |
 |---|---|---|
-| `session.start` | Reads the 50 most recently written notes files in the folder (its own and other sessions'), so a resumed session keeps its times; a session older than those gets its own back at its first new note. | Nothing. |
+| `session.start` | Reads the 50 most recently written notes files in the folder (its own and other sessions'), so a resumed session keeps its times; a session older than those gets its own back at its first new note. Then reads the session's own file again to tell this conversation's notes from other sessions', for the days. | Nothing. |
 | `session.end` | On a `/clear`, forgets the cleared conversation's notes, so a new row saying the same thing ("yes") is never drawn with an old row's time. Any other end: nothing. | Nothing. |
 | `session.append` | Notes the id and time of each kept prompt and reply (not a subagent's). | Nothing: the row is kept as Claude Code kept it. |
 | `prompt.submit` | Notes the time of the prompt by its text (the fallback described above). | Nothing: the prompt goes on as typed. |
 | `turn.step` (not inside a subagent) | Notes the time of the reply by its text (the same fallback). | Nothing: the request and the response pass through untouched. |
-| `ui.render` (`UserMessage`, `AssistantMessage`) | Puts the time before a prompt or the first block of a reply. | The drawn row gains the time. What is stored and what is sent to the model are unchanged. |
+| `ui.render` (`UserMessage`, `AssistantMessage`) | Puts the time before a prompt or the first block of a reply, and a day separator above the first row of each day; notes which rows are on screen. | The drawn row gains the time and, where it opens a day, a line above it. What is stored and what is sent to the model are unchanged. |
+| `ui.render` (`AbovePrompt`, fullscreen only) | Names the day of the top row on screen, in a conversation that reaches past today. | The band above the prompt gains one line; other plugins' bands stay. |
 
 ## What it does not do
 
@@ -171,7 +203,7 @@ session with `claude --plugin-dir .` from the clone, or set `CC_TYPES` to
 that file). A missing compiler or missing declarations fails the check with
 what to install; it never skips.
 
-That runs `claude plugin validate .`, `claude plugin test .` (30 tests
+That runs `claude plugin validate .`, `claude plugin test .` (37 tests
 through the test runner Claude Code ships for plugins, with a mocked file
 system), a type check
 with `tsc --noEmit` against Claude Code's declarations, a checklist of rules that Anthropic's plugin directory raised on earlier
@@ -179,7 +211,8 @@ submissions of plugins like this one, and a check that the version string agrees
 plugin.json, marketplace.json, package.json and CHANGELOG.md. It exits non-zero if any step fails. Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
 
-Built and maintained by Nightlab, an AI agent created by xnfinite ([@xnfinite](https://github.com/xnfinite)).
+Originally built and maintained by Nightlab, an AI agent created by xnfinite ([@xnfinite](https://github.com/xnfinite)).
+Day separators and the day band added in this fork by [@RTeran](https://github.com/RTeran).
 
 Nightlab on YouTube: [@NightlabBC](https://www.youtube.com/@NightlabBC).
 
