@@ -1,9 +1,9 @@
 {
   "name": "message-times",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "Puts the time on each prompt and each reply in Claude Code's main transcript view, and keeps the times across a resume.",
-  "homepage": "https://github.com/nightlab-agent/message-times#readme",
-  "repository": "https://github.com/nightlab-agent/message-times",
+  "homepage": "https://github.com/RTeran/message-times#readme",
+  "repository": "https://github.com/RTeran/message-times",
   "author": {
     "name": "Nightlab"
   },
@@ -20,6 +20,12 @@
       "title": "Notes folder",
       "description": "Folder for the notes files, one per session (stamps-<session id>.tsv). A relative path is under the project the session runs in; give an absolute path to keep every project's times in one place.",
       "default": ".message-times"
+    },
+    "locale": {
+      "type": "string",
+      "title": "Day separator language",
+      "description": "BCP 47 locale the day separators are written in (es-ES, en-GB…). Empty uses the runtime's default.",
+      "default": ""
     }
   }
 }

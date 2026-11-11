@@ -2,6 +2,21 @@
 
 The form is Keep a Changelog; versions follow SemVer.
 
+## 0.4.0 - 2026-11-11
+
+Fork of nightlab-agent/message-times.
+
+### Added
+- Day separators: in a conversation that reaches past today, the first row of each day gets a
+  line above it naming the day (`── Tuesday 10 November ──`), and rows show the clock alone.
+  A conversation held within today looks as before. Only this conversation's notes open a day;
+  other sessions' notes in the folder do not.
+- In fullscreen, a band above the prompt names the day of the top row on screen and follows the
+  scroll. Off fullscreen, where the terminal emulator scrolls unseen by Claude Code, the band is
+  not drawn.
+- `locale` option: the language the day is written in (`es-ES`, `en-GB`…); empty uses the
+  runtime's default.
+
 ## 0.3.7 - 2026-11-03
 
 ### Docs

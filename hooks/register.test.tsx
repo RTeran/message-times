@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 import type { TestBody } from 'claude-code/testing'
 
-import { byText, fileText, KEEP, keyOf, parseFile, stampFor, timeOf, trim } from './register'
+import { byText, clockOf, dayLabelOf, fileText, KEEP, keyOf, opensDay, parseFile, spansDays, stampFor, timeOf, trim } from './register'
 
 // Each test stands for the engine beneath the plugin: it answers
 // `session.start`, `$.fs.read` and `$.fs.write`, keeps the rows
@@ -123,8 +123,101 @@ test('a resumed session reads the times from the file', async ($, on) => {
   const file = 'u-9\t2026-10-27T13:15:32.000Z\tuser:deploy the fix\n'
   const { drawn } = world(on, { file })
   await start($)
-  await drawUser($, 'u-9', 'deploy the fix')
-  expect(drawn[0]).toBe(`[${timeOf('2026-10-27T13:15:32.000Z', new Date())}] deploy the fix`)
+  const tree = await drawUser($, 'u-9', 'deploy the fix')
+  expect(drawn[0]).toBe(`[${clockOf('2026-10-27T13:15:32.000Z')}] deploy the fix`)
+  expect(JSON.stringify(tree)).toContain(`── ${dayLabelOf('2026-10-27T13:15:32.000Z', new Date())} ──`)
+})
+
+test('a conversation held within today draws no day separator and keeps the plain time', async ($, on) => {
+  const { drawn } = world(on)
+  await start($)
+  await prompt($, 'u-1', 'check worker status')
+  const tree = await drawUser($, 'u-1', 'check worker status')
+  expect(drawn[0]).toMatch(STAMP)
+  expect(JSON.stringify(tree)).not.toContain('──')
+})
+
+test('a resumed conversation from another day: its first row of each day opens a separator, the rest do not', async ($, on) => {
+  const file = [
+    'u-1\t2026-10-27T09:00:00.000Z\tuser:first of the day',
+    'a-1\t2026-10-27T09:00:20.000Z\tassistant:answer to it',
+    'u-2\t2026-10-28T09:00:00.000Z\tuser:next day',
+  ].join('\n') + '\n'
+  world(on, { file })
+  await start($)
+  const first = await drawUser($, 'u-1', 'first of the day')
+  const answer = await drawReply($, 'a-1', 'answer to it')
+  const next = await drawUser($, 'u-2', 'next day')
+  expect(JSON.stringify(first)).toContain(`── ${dayLabelOf('2026-10-27T09:00:00.000Z', new Date())} ──`)
+  expect(JSON.stringify(answer)).not.toContain('──')
+  expect(JSON.stringify(next)).toContain(`── ${dayLabelOf('2026-10-28T09:00:00.000Z', new Date())} ──`)
+})
+
+test('helpers: days are opened among this conversation\'s notes only, a row\'s own earlier note aside', () => {
+  const all = {
+    'other-session': { at: '2026-10-27T08:00:00.000Z', key: 'user:elsewhere' },
+    'prompt:x': { at: '2026-10-27T09:00:00.000Z', key: 'user:hello' },
+    'u-1': { at: '2026-10-27T09:00:00.300Z', key: 'user:hello' },
+    'u-2': { at: '2026-10-27T10:00:00.000Z', key: 'user:later' },
+  }
+  const ownIds = ['prompt:x', 'u-1', 'u-2']
+  expect(opensDay(all, ownIds, '2026-10-27T09:00:00.300Z', 'user:hello')).toBe(true)
+  expect(opensDay(all, ownIds, '2026-10-27T10:00:00.000Z', 'user:later')).toBe(false)
+  expect(opensDay(all, [...ownIds, 'other-session'], '2026-10-27T09:00:00.300Z', 'user:hello')).toBe(false)
+  expect(spansDays(all, ownIds, new Date('2026-10-27T12:00:00.000Z'))).toBe(false)
+  expect(spansDays(all, ownIds, new Date('2026-10-29T12:00:00.000Z'))).toBe(true)
+  expect(spansDays(all, [], new Date('2026-10-29T12:00:00.000Z'))).toBe(false)
+})
+
+const band = ($: $T, isFullscreen: boolean | undefined) =>
+  $.ui.render({
+    surface: 'terminal',
+    component: 'AbovePrompt',
+    requestId: 'band',
+    props: { hasSurvey: false, isCollapsed: false, isWorking: false, maxRows: 10 } as never,
+    viewport: { columns: 80, rows: 40, ...(isFullscreen === undefined ? {} : { isFullscreen }) },
+  } as never)
+
+const twoDays = [
+  'u-1\t2026-10-27T09:00:00.000Z\tuser:first day',
+  'u-2\t2026-10-28T09:00:00.000Z\tuser:second day',
+].join('\n') + '\n'
+
+test('fullscreen: the band above the prompt names the day of the top row on screen, and follows a scroll', async ($, on) => {
+  world(on, { file: twoDays })
+  await start($)
+  const first = dayLabelOf('2026-10-27T09:00:00.000Z', new Date())
+  const second = dayLabelOf('2026-10-28T09:00:00.000Z', new Date())
+  await drawUser($, 'u-1', 'first day', { onScreen: { first: 0, last: 2, of: 3 } })
+  await drawUser($, 'u-2', 'second day', { onScreen: { first: 0, last: 2, of: 3 } })
+  expect(JSON.stringify(await band($, true))).toContain(`── ${first} ──`)
+  await drawUser($, 'u-1', 'first day', { onScreen: null })
+  const after = JSON.stringify(await band($, true))
+  expect(after).toContain(`── ${second} ──`)
+  expect(after).not.toContain(first)
+})
+
+test('the band is not drawn off fullscreen, where the size does not say, or in a conversation held within today', async ($, on) => {
+  world(on, { file: twoDays })
+  await start($)
+  await drawUser($, 'u-1', 'first day', { onScreen: { first: 0, last: 2, of: 3 } })
+  expect(JSON.stringify(await band($, false))).not.toContain('──')
+  expect(JSON.stringify(await band($, undefined))).not.toContain('──')
+})
+
+test('comparison: in a conversation held within today the fullscreen band stays empty', async ($, on) => {
+  world(on)
+  await start($)
+  await prompt($, 'u-1', 'check worker status')
+  await drawUser($, 'u-1', 'check worker status', { onScreen: { first: 0, last: 2, of: 3 } })
+  expect(JSON.stringify(await band($, true))).not.toContain('──')
+})
+
+test('helpers: the day label follows the locale and names the year only when it is not this year\'s', () => {
+  const now = new Date('2026-11-11T12:00:00')
+  expect(dayLabelOf('2026-11-10T12:00:00', now, 'es-ES')).toBe('martes, 10 de noviembre')
+  expect(dayLabelOf('2025-11-10T12:00:00', now, 'es-ES')).toContain('2025')
+  expect(dayLabelOf('2026-11-10T12:00:00', now, 'en-GB')).toBe('Tuesday 10 November')
 })
 
 test('a row with no note, or one of two rows with the same text and other ids, is drawn without a time', async ($, on) => {

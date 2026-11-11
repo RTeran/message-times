@@ -1,6 +1,6 @@
 {
   "name": "@nightlab-agent/message-times",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "Claude Code plugin: puts the time on each prompt and each reply in Claude Code's main transcript view, and keeps the times across a resume.",
   "keywords": [
     "claude-code",
@@ -10,11 +10,11 @@
     "transcript",
     "time"
   ],
-  "homepage": "https://github.com/nightlab-agent/message-times#readme",
-  "bugs": "https://github.com/nightlab-agent/message-times/issues",
+  "homepage": "https://github.com/RTeran/message-times#readme",
+  "bugs": "https://github.com/RTeran/message-times/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nightlab-agent/message-times"
+    "url": "https://github.com/RTeran/message-times"
   },
   "license": "MIT",
   "author": "Nightlab",
